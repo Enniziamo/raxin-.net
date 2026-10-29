@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/eniz/coding/c#/Game-Cli/Game-Cli.csproj",
+      "projectUniqueName": "/home/eniz/coding/c#/raxin-.net/Game-Cli.csproj",
       "projectName": "Game-Cli",
-      "projectPath": "/home/eniz/coding/c#/Game-Cli/Game-Cli.csproj",
+      "projectPath": "/home/eniz/coding/c#/raxin-.net/Game-Cli.csproj",
       "packagesPath": "/home/eniz/.nuget/packages/",
-      "outputPath": "/home/eniz/coding/c#/Game-Cli/obj/",
+      "outputPath": "/home/eniz/coding/c#/raxin-.net/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/eniz/.nuget/NuGet/NuGet.Config"

@@ -1,4 +1,4 @@
-# 🗺️ Forest Adventure (Go Text-Based RPG)
+# 🗺️ Forest Adventure (C# Text-Based RPG)
 
 A terminal-based adventure game written in Go.  
 Explore different locations, collect items, craft tools, uncover secrets, and reveal hidden story elements.
@@ -23,15 +23,4 @@ This is a single-player offline text RPG designed to run directly in the termina
 
 ## 🧰 Requirements
 
-- Go 1.18+
-- Terminal with UTF-8 support (for emoji rendering)
-
----
-
-## 🚀 How to Run
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/yourusername/forest-adventure.git
-cd forest-adventure
+- .NET 9-10 SDK

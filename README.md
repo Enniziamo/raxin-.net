@@ -1,6 +1,6 @@
 # 🗺️ Forest Adventure (C# Text-Based RPG)
 
-A terminal-based adventure game written in Go.  
+just a game-core from scratch.  
 Explore different locations, collect items, craft tools, uncover secrets, and reveal hidden story elements.
 
 This is a single-player offline text RPG designed to run directly in the terminal.
@@ -9,18 +9,12 @@ This is a single-player offline text RPG designed to run directly in the termina
 
 ## 🎮 Features
 
-- 🌍 Multiple connected locations
-- 🧭 Movement system (`go <location>`)
-- 🎒 Inventory system
-- 🛠 Crafting system
-- 💬 NPC interaction
-- 🔐 Hidden secret area
-- 🎨 ASCII art environments
-- 📜 Story progression
-- 🧠 Simple command parser
+- the core c# version of raxin
+- hobby project
 
 ---
 
 ## 🧰 Requirements
 
-- .NET 9-10 SDK
+- .NET 10 SDK
+- a brain?

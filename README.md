@@ -1,13 +1,13 @@
-# 🗺️ Forest Adventure (C# Text-Based RPG)
+# Raxin (C# RPG Game Core)
 
 just a game-core from scratch.  
-Explore different locations, collect items, craft tools, uncover secrets, and reveal hidden story elements.
 
-This is a single-player offline text RPG designed to run directly in the terminal.
+im still working on it...
+this is a simple game-core of raxin. it was useless to for now i saw the potencial of game-core
 
 ---
 
-## 🎮 Features
+## Features
 
 - the core c# version of raxin
 - hobby project

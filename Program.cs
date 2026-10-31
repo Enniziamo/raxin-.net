@@ -1,4 +1,5 @@
-﻿using AdventureGame;
+﻿
+using AdventureGame;
 
 class Program
 {
@@ -20,15 +21,20 @@ class Program
             ShowLocation(world);
 
             Console.Write("\n> ");
-            string input = Console.ReadLine()?.Trim().ToLowerInvariant() ?? "";
+            string input = Console.ReadLine()?.Trim() ?? "";
 
-            string[] parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = input.Split(
+                ' ',
+                StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length == 0)
                 continue;
 
-            string command = parts[0];
-            string argument = parts.Length > 1 ? parts[1] : "";
+            string command = parts[0].ToLowerInvariant();
+
+            string argument = parts.Length > 1
+                ? string.Join(" ", parts.Skip(1))
+                : "";
 
             CommandResult result;
 
@@ -40,7 +46,9 @@ class Program
 
                 case "look":
                     Console.WriteLine(world.GetLocationDescription());
-                    Console.WriteLine("Paths: " + string.Join(", ", world.GetAvailablePaths()));
+                    Console.WriteLine(
+                        "Paths: " +
+                        string.Join(", ", world.GetAvailablePaths()));
                     continue;
 
                 case "map":
@@ -64,7 +72,8 @@ class Program
                     break;
 
                 case "craft":
-                    result = interactions.Craft(argument);
+                    result = CommandResult.Fail(
+                        "Crafting recipes are not configured yet.");
                     break;
 
                 case "open":
@@ -84,7 +93,8 @@ class Program
                     return;
 
                 default:
-                    result = CommandResult.Fail("Unknown command. Type 'help'.");
+                    result = CommandResult.Fail(
+                        "Unknown command. Type 'help'.");
                     break;
             }
 
@@ -121,27 +131,40 @@ class Program
             "- exit");
     }
 
-    static CommandResult ShowMap(WorldManager world, string argument)
+    static CommandResult ShowMap(
+        WorldManager world,
+        string argument)
     {
         if (argument != "list" && argument != "")
             return CommandResult.Fail("Usage: map list");
 
-        var lines = new List<string> { "Known locations:" };
-        lines.AddRange(world.GetKnownLocationNames().Select(name => $"- {name}"));
+        var lines = new List<string>
+        {
+            "Known locations:"
+        };
+
+        lines.AddRange(
+            world.GetKnownLocationNames()
+                .Select(name => $"- {name}"));
 
         if (world.HasUndiscoveredLocations())
             lines.Add("Some locations remain undiscovered.");
 
-        return CommandResult.Ok(string.Join("\n", lines));
+        return CommandResult.Ok(
+            string.Join("\n", lines));
     }
 
-    static CommandResult ShowInventory(InventoryManager inventory)
+    static CommandResult ShowInventory(
+        InventoryManager inventory)
     {
         if (inventory.Items.Count == 0)
-            return CommandResult.Ok("Your inventory is empty.");
+            return CommandResult.Ok(
+                "Your inventory is empty.");
 
         return CommandResult.Ok(
             "Inventory:\n" +
-            string.Join("\n", inventory.Items.Select(item => $"- {item}")));
+            string.Join(
+                "\n",
+                inventory.Items.Select(item => $"- {item}")));
     }
 }

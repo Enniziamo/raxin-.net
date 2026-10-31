@@ -65,10 +65,7 @@ public class InteractionManager
             return CommandResult.Fail(
                 "You need something strong to break the stone.");
 
-        world.BreakGlowingStone();
-
-        return CommandResult.Ok(
-            "You break the glowing stone. A hidden passage opens!");
+        return world.BreakGlowingStone();
     }
 
     private CommandResult InteractChurch()

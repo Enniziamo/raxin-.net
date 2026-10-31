@@ -84,7 +84,9 @@ public class WorldManager
 
     public bool HasUndiscoveredLocations()
     {
-        return true;
+        return locations.Values.Any(location =>
+            location.Connections.Any(connection =>
+                !locations.ContainsKey(connection.ToLowerInvariant())));
     }
 
     public CommandResult Move(string destination)

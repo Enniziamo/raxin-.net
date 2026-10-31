@@ -1,464 +1,147 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-
-class Location
-{
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public string AsciiArt { get; set; }
-    public List<string> Connections { get; set; } = new List<string>();
-}
+﻿using AdventureGame;
 
 class Program
 {
-    static List<string> inventory = new List<string>();
-    static string foundItem = "";
-
-    static void Main()
+    static void Main(string[] args)
     {
-        var locations = new Dictionary<string, Location>
+        var world = new WorldManager();
+        var inventory = new InventoryManager();
+        var interactions = new InteractionManager(world, inventory);
+
+        world.Initialize();
+
+        Console.WriteLine("Welcome to the adventure!");
+        Console.WriteLine("Type 'help' to see available commands.");
+
+        bool gameRunning = true;
+
+        while (gameRunning)
         {
-            ["entrance"] = new Location
-            {
-                Name = "entrance",
-                Description = "there's a stick. you stand at the forest entrance. paths lead forward into the woods.",
-                AsciiArt = @"
-  /\  /\  /\  /\
- /  \/  \/  \/  \
- |   ENTRANCE    |
- |      []       |
-  \/  \/  \/  \/
-",
-                Connections = new List<string> { "riverside", "cavern" }
-            },
-            ["riverside"] = new Location
-            {
-                Name = "riverside",
-                Description = "you reach the riverside. the sound of water calms you. maybe you can fish here.",
-                AsciiArt = @"
- ~ ~ ~ ~ ~ ~ ~ ~
-~  RIVERSIDE   ~
- ~ ~ ~ ~ ~ ~ ~ ~
-    \_______/
-",
-                Connections = new List<string> { "entrance", "city", "riverbank" }
-            },
-            ["city"] = new Location
-            {
-                Name = "city",
-                Description = "you arrive at a noisy city. there’s a chest near a fountain. an old man is here.",
-                AsciiArt = @"
-  ___  ___  ___
- |___||___||___|
-      .---.
-     ( o o )
-  [ CITY SQUARE ]
-       [C]
-",
-                Connections = new List<string> { "riverside", "beach", "cavern" }
-            },
-            ["beach"] = new Location
-            {
-                Name = "beach",
-                Description = "you stand on a sunny beach. the sand hides something shiny.",
-                AsciiArt = @"
-  \_/\_/\_/\_/\_/
-   ~ ~ ~ ~ ~ ~ ~
-    [ BEACH ]
-  .___________.
-",
-                Connections = new List<string> { "city" }
-            },
-            ["cavern"] = new Location
-            {
-                Name = "cavern",
-                Description = "you enter a dark cavern. a glowing stone blocks your way.",
-                AsciiArt = @"
-      ______
-   __/      \__
-  /   CAVERN   \
- |      **      |
-  \____________/
-",
-                Connections = new List<string> { "riverside" }
-            },
-            ["church"] = new Location
-            {
-                Name = "church",
-                Description = "a secret church beyond the cavern. a priest stands here, looking sad.",
-                AsciiArt = @"
-       /\
-      /  \
-     /____\
-    |  ++  |
-    |______|
-    [ CHURCH ]
-",
-                Connections = new List<string> { "cavern" }
-            },
-            ["riverbank"] = new Location
-            {
-                Name = "riverbank",
-                Description = "you stand at the edge of sparkling river. a brown raccoon is here, sipping on a soda. it looks at you curiously.",
-                AsciiArt = @"
-  /\/\  /\/\  /\/\
- /    \/    \/    \
-     [ RIVERBANK ]
-       \_____/
-",
-                Connections = new List<string> { "riverside" }
-            }
-        };
+            ShowLocation(world);
 
-        var history = new List<string>();
-        string currentLocation = "entrance";
-
-        Console.WriteLine("welcome to the adventure!");
-        Console.WriteLine("type 'help' to see available commands.\n");
-
-        while (true)
-        {
-            Location loc = locations[currentLocation];
-
-            Console.WriteLine(loc.AsciiArt);
-            Console.WriteLine($"location: {loc.Name}");
-            Console.WriteLine(loc.Description);
             Console.Write("\n> ");
+            string input = Console.ReadLine()?.Trim().ToLowerInvariant() ?? "";
 
-            string input = Console.ReadLine()?.ToLower().Trim() ?? "";
             string[] parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length == 0)
                 continue;
 
             string command = parts[0];
+            string argument = parts.Length > 1 ? parts[1] : "";
+
+            CommandResult result;
 
             switch (command)
             {
                 case "help":
-                    Console.WriteLine("\ncommands:");
-                    Console.WriteLine("  look          - look around");
-                    Console.WriteLine("  go <place>    - move to a connected place (ex: go city)");
-                    Console.WriteLine("  interact      - interact with environment");
-                    Console.WriteLine("  take <item>   - take an item you've found");
-                    Console.WriteLine("  open          - open chests or items");
-                    Console.WriteLine("  talk          - talk to people");
-                    Console.WriteLine("  inventory     - show your items");
-                    Console.WriteLine("  map list      - show map");
-                    Console.WriteLine("  exit          - quit game");
-                    break;
+                    ShowHelp();
+                    continue;
+
+                case "look":
+                    Console.WriteLine(world.GetLocationDescription());
+                    Console.WriteLine("Paths: " + string.Join(", ", world.GetAvailablePaths()));
+                    continue;
 
                 case "map":
-                case "map list":
-                    Console.WriteLine(@"
-            [ ENTRANCE ]
-             /        \
-        [ RIVERSIDE ]--[ CAVERN ]
-        /     |    \       |
- [ RIVERBANK ] [ CITY ]  [ CHURCH ]
-                 |
-             [ BEACH ]
-");
-                    break;
-
-                case "back":
-                    if (history.Count == 0)
-                    {
-                        Console.WriteLine("there's nowhere to back");
-                    }
-                    else
-                    {
-                        string last = history[history.Count - 1];
-                        history.RemoveAt(history.Count - 1);
-                        currentLocation = last;
-                    }
+                    result = ShowMap(world, argument);
                     break;
 
                 case "go":
-                    if (parts.Length < 2)
-                    {
-                        Console.WriteLine("where do you want to go? (example: go city)");
-                        continue;
-                    }
+                    result = world.Move(argument);
+                    break;
 
-                    string target = parts[1];
-
-                    if (target == currentLocation)
-                    {
-                        Console.WriteLine("you are already there.");
-                        continue;
-                    }
-
-                    if (CanMove(currentLocation, target, locations))
-                    {
-                        history.Add(currentLocation);
-                        currentLocation = target;
-                        foundItem = "";
-                    }
-                    else
-                    {
-                        Console.WriteLine("you can't go there directly.");
-                    }
+                case "back":
+                    result = world.GoBack();
                     break;
 
                 case "interact":
-                    HandleInteract(currentLocation, locations);
-                    break;
-
-                case "craft":
-                    if (parts.Length < 2)
-                    {
-                        Console.WriteLine("craft what? (example: craft fishingrod)");
-                        continue;
-                    }
-
-                    string item = parts[1];
-
-                    if (item == "fishingrod")
-                    {
-                        if (HasItem(inventory, "stick") &&
-                            HasItem(inventory, "rope") &&
-                            HasItem(inventory, "nail"))
-                        {
-                            if (!HasItem(inventory, "fishingrod"))
-                            {
-                                Console.WriteLine("you tie rope to the stick and use the nail as a hook - a fishing rod is made!");
-                                AddItem(inventory, "fishingrod");
-                            }
-                            else
-                            {
-                                Console.WriteLine("you already made a fishing rod.");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("you don't have all materials (need stick, rope, nail)");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("you can't craft that.");
-                    }
-                    break;
-
-                case "look":
-                    Console.WriteLine(loc.AsciiArt);
-                    Console.WriteLine($"location: {loc.Name}");
-                    Console.WriteLine(loc.Description);
-                    Console.WriteLine($"-> you can go to {string.Join(", ", loc.Connections)}");
+                    result = interactions.Interact();
                     break;
 
                 case "take":
-                    if (parts.Length < 2)
-                    {
-                        Console.WriteLine("take what?");
-                        continue;
-                    }
+                    result = interactions.TakeItem(argument);
+                    break;
 
-                    string takeItem = parts[1];
-
-                    if (foundItem == takeItem)
-                    {
-                        Console.WriteLine($"you picked up the {takeItem}!");
-                        AddItem(inventory, takeItem);
-                        foundItem = "";
-                    }
-                    else
-                    {
-                        Console.WriteLine("there's nothing like that to take here.");
-                    }
+                case "craft":
+                    result = interactions.Craft(argument);
                     break;
 
                 case "open":
-                    if (currentLocation == "city")
-                    {
-                        if (!HasItem(inventory, "hatenna"))
-                        {
-                            Console.WriteLine("you open the chest and find a pokemon - hatenna joins you!");
-                            AddItem(inventory, "hatenna");
-                        }
-                        else
-                        {
-                            Console.WriteLine("the chest is empty now.");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("there's nothing to open here.");
-                    }
+                    result = interactions.OpenChest();
                     break;
 
                 case "talk":
-                    switch (currentLocation)
-                    {
-                        case "city":
-                            Console.WriteLine("old man: 'i heard there's a tunnel under the glowing stone in the cavern...'");
-                            break;
-
-                        case "church":
-                            if (HasItem(inventory, "gem"))
-                            {
-                                Console.WriteLine("priest: 'my gem! thank you, traveler!'");
-                                Console.WriteLine("you are blessed with a divine light.");
-                                AddItem(inventory, "blessing");
-                            }
-                            else
-                            {
-                                Console.WriteLine("priest: 'i lost my precious gem somewhere in the forest...'");
-                            }
-                            break;
-
-                        default:
-                            Console.WriteLine("no one to talk to here.");
-                            break;
-                    }
+                    result = interactions.Talk();
                     break;
 
                 case "inventory":
-                    if (inventory.Count == 0)
-                    {
-                        Console.WriteLine("your inventory is empty.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("inventory: " + string.Join(", ", inventory));
-                    }
+                    result = ShowInventory(inventory);
                     break;
 
                 case "exit":
-                    Console.WriteLine("you exit the game. goodbye!");
+                    Console.WriteLine("Goodbye!");
                     return;
 
                 default:
-                    Console.WriteLine("unknown command. type 'help' to see commands.");
+                    result = CommandResult.Fail("Unknown command. Type 'help'.");
                     break;
+            }
+
+            Console.WriteLine(result.Message);
+
+            if (result.GameEnded)
+            {
+                Console.WriteLine("Press Enter to exit.");
+                Console.ReadLine();
+                gameRunning = false;
             }
         }
     }
 
-    static bool CanMove(string current, string target, Dictionary<string, Location> locations)
+    static void ShowLocation(WorldManager world)
     {
-        return locations[current].Connections.Contains(target);
+        Console.WriteLine(world.GetLocationDescription());
     }
 
-    static bool HasItem(List<string> inventory, string item)
+    static void ShowHelp()
     {
-        return inventory.Contains(item);
+        Console.WriteLine(
+            "Available commands:\n" +
+            "- look\n" +
+            "- map list\n" +
+            "- go <location>\n" +
+            "- back\n" +
+            "- interact\n" +
+            "- take <item>\n" +
+            "- craft <item>\n" +
+            "- open\n" +
+            "- talk\n" +
+            "- inventory\n" +
+            "- exit");
     }
 
-    static void AddItem(List<string> inventory, string item)
+    static CommandResult ShowMap(WorldManager world, string argument)
     {
-        if (!inventory.Contains(item))
-        {
-            inventory.Add(item);
-        }
+        if (argument != "list" && argument != "")
+            return CommandResult.Fail("Usage: map list");
+
+        var lines = new List<string> { "Known locations:" };
+        lines.AddRange(world.GetKnownLocationNames().Select(name => $"- {name}"));
+
+        if (world.HasUndiscoveredLocations())
+            lines.Add("Some locations remain undiscovered.");
+
+        return CommandResult.Ok(string.Join("\n", lines));
     }
 
-    static void HandleInteract(string currentLocation, Dictionary<string, Location> locations)
+    static CommandResult ShowInventory(InventoryManager inventory)
     {
-        switch (currentLocation)
-        {
-            case "entrance":
-                if (!HasItem(inventory, "stick"))
-                {
-                    Console.WriteLine("you pull a sturdy stick from a fallen branch.");
-                    AddItem(inventory, "stick");
-                }
-                else
-                {
-                    Console.WriteLine("you already took a stick.");
-                }
-                break;
+        if (inventory.Items.Count == 0)
+            return CommandResult.Ok("Your inventory is empty.");
 
-            case "riverside":
-                if (HasItem(inventory, "fishingrod"))
-                {
-                    if (!HasItem(inventory, "gem"))
-                    {
-                        Console.WriteLine("something shines under the water...");
-                        Console.WriteLine("you cast your fishing rod and pull out a glowing gem!");
-                        AddItem(inventory, "gem");
-                    }
-                    else
-                    {
-                        Console.WriteLine("the river is calm now.");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("you see something shiny in the water, but it's too far to reach by hand.");
-                }
-                break;
-
-            case "beach":
-                if (!HasItem(inventory, "hammer"))
-                {
-                    Console.WriteLine("you see something shiny buried in the sand. maybe you can 'take hammer'.");
-                    foundItem = "hammer";
-                }
-                else
-                {
-                    Console.WriteLine("you already took the hammer.");
-                }
-
-                if (!HasItem(inventory, "rope"))
-                {
-                    Console.WriteLine("you find an old rope tangled in the sand.");
-                    AddItem(inventory, "rope");
-                }
-                else
-                {
-                    Console.WriteLine("the rope is already taken.");
-                }
-                break;
-
-            case "cavern":
-                if (HasItem(inventory, "hammer"))
-                {
-                    Console.WriteLine("you break the glowing stone! a passage opens to a hidden church!");
-
-                    if (!locations["cavern"].Connections.Contains("church"))
-                    {
-                        locations["cavern"].Connections.Add("church");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("you need something strong to break the stone.");
-                }
-                break;
-
-            case "church":
-                if (!HasItem(inventory, "nail"))
-                {
-                    Console.WriteLine("you notice a bent nail on the floor and pick it up.");
-                    AddItem(inventory, "nail");
-                }
-                else
-                {
-                    Console.WriteLine("there's nothing else of interest here.");
-                }
-
-                if (HasItem(inventory, "gem"))
-                {
-                    Console.WriteLine("priest: 'my gem... thank you traveler.'");
-                    Thread.Sleep(1000);
-                    Console.WriteLine("'FOOL! You freed me!' - the priest transforms into a witcher");
-                    Console.WriteLine("the church trembles as darkness spreads. demo ends here.");
-                    Console.WriteLine("----------------------------------------------------------");
-                    Environment.Exit(0);
-                }
-                else
-                {
-                    Console.WriteLine("priest: 'have you found my lost gem?'");
-                }
-                break;
-
-            default:
-                Console.WriteLine("nothing special to interact with here.");
-                break;
-        }
+        return CommandResult.Ok(
+            "Inventory:\n" +
+            string.Join("\n", inventory.Items.Select(item => $"- {item}")));
     }
 }
